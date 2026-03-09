@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recipes - Recipe Hub</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <nav>
+        <h1>🍳 Recipe Hub</h1>
+        <div>
+            <a href="recipes.html" class="active">Recipes</a>
+            <a href="settings.html">Settings</a>
+            <a href="#" onclick="logout()">Logout</a>
+        </div>
+    </nav>
+    <div class="container">
+        <div class="search-bar">
+            <input type="text" id="searchInput" placeholder="Search recipes..." onkeyup="searchRecipes()">
+            <button onclick="showAddForm()">+ Add Recipe</button>
+        </div>
+        
+        <div id="addRecipeForm" style="display:none;">
+            <h3>Add New Recipe</h3>
+            <input type="text" id="recipeName" placeholder="Recipe Name">
+            <input type="text" id="recipeCategory" placeholder="Category (e.g., Dessert, Main Course)">
+            <textarea id="recipeIngredients" placeholder="Ingredients (one per line)" rows="5"></textarea>
+            <textarea id="recipeInstructions" placeholder="Instructions" rows="5"></textarea>
+            <input type="number" id="recipePrepTime" placeholder="Prep Time (minutes)">
+            <div>
+                <button onclick="addRecipe()">Save Recipe</button>
+                <button onclick="hideAddForm()">Cancel</button>
+            </div>
+        </div>
+
+        <div id="recipesList"></div>
+    </div>
+    <script src="app.js"></script>
+    <script>
+        checkAuth();
+        displayRecipes();
+
+        function displayRecipes(filter = '') {
+            const recipes = getRecipes();
+            const list = document.getElementById('recipesList');
+            const filtered = recipes.filter(r => 
+                r.name.toLowerCase().includes(filter.toLowerCase()) ||
+                r.category.toLowerCase().includes(filter.toLowerCase())
+            );
+
+            list.innerHTML = filtered.map(recipe => `
+                <div class="recipe-card" onclick="viewRecipe(${recipe.id})">
+                    <h3>${recipe.name}</h3>
+                    <p class="category">${recipe.category}</p>
+                    <p class="prep-time">⏱️ ${recipe.prepTime} min</p>
+                </div>
+            `).join('');
+        }
+
+        function searchRecipes() {
+            const query = document.getElementById('searchInput').value;
+            displayRecipes(query);
+        }
+
+        function showAddForm() {
+            document.getElementById('addRecipeForm').style.display = 'block';
+        }
+
+        function hideAddForm() {
+            document.getElementById('addRecipeForm').style.display = 'none';
+            document.getElementById('recipeName').value = '';
+            document.getElementById('recipeCategory').value = '';
+            document.getElementById('recipeIngredients').value = '';
+            document.getElementById('recipeInstructions').value = '';
+            document.getElementById('recipePrepTime').value = '';
+        }
+
+        function addRecipe() {
+            const name = document.getElementById('recipeName').value;
+            const category = document.getElementById('recipeCategory').value;
+            const ingredients = document.getElementById('recipeIngredients').value;
+            const instructions = document.getElementById('recipeInstructions').value;
+            const prepTime = document.getElementById('recipePrepTime').value;
+
+            if (!name || !category || !ingredients || !instructions || !prepTime) {
+                alert('Please fill all fields');
+                return;
+            }
+
+            const recipes = getRecipes();
+            const newRecipe = {
+                id: Date.now(),
+                name,
+                category,
+                ingredients: ingredients.split('\n').filter(i => i.trim()),
+                instructions,
+                prepTime: parseInt(prepTime)
+            };
+
+            recipes.push(newRecipe);
+            localStorage.setItem('recipes', JSON.stringify(recipes));
+            hideAddForm();
+            displayRecipes();
+        }
+
+        function viewRecipe(id) {
+            window.location.href = 'recipe-detail.html?id=' + id;
+        }
+    </script>
+</body>
+</html>
