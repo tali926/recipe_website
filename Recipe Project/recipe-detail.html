@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recipe Detail - Recipe Hub</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <nav>
+        <h1>🍳 Recipe Hub</h1>
+        <div>
+            <a href="recipes.html">Recipes</a>
+            <a href="settings.html">Settings</a>
+            <a href="#" onclick="logout()">Logout</a>
+        </div>
+    </nav>
+    <div class="container">
+        <div class="recipe-detail">
+            <button onclick="history.back()" class="back-btn">← Back</button>
+            <div id="recipeContent"></div>
+            <div class="voice-controls">
+                <button id="readBtn" onclick="readRecipe()">🔊 Read Recipe</button>
+                <button id="stopBtn" onclick="stopReading()" style="display:none;">⏹️ Stop</button>
+            </div>
+        </div>
+    </div>
+    <script src="app.js"></script>
+    <script>
+        checkAuth();
+        let isReading = false;
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const recipeId = parseInt(urlParams.get('id'));
+        const recipe = getRecipes().find(r => r.id === recipeId);
+
+        if (!recipe) {
+            document.getElementById('recipeContent').innerHTML = '<p>Recipe not found</p>';
+        } else {
+            document.getElementById('recipeContent').innerHTML = `
+                <h2>${recipe.name}</h2>
+                <p class="category">${recipe.category}</p>
+                <p class="prep-time">⏱️ Prep Time: ${recipe.prepTime} minutes</p>
+                <h3>Ingredients:</h3>
+                <ul>
+                    ${recipe.ingredients.map(ing => `<li>${ing}</li>`).join('')}
+                </ul>
+                <h3>Instructions:</h3>
+                <p>${recipe.instructions}</p>
+            `;
+
+            const user = getCurrentUser();
+            const settings = getUserSettings(user);
+            if (settings.autoRead === 'true') {
+                setTimeout(() => readRecipe(), 500);
+            }
+        }
+
+        function readRecipe() {
+            if (isReading) return;
+            
+            const user = getCurrentUser();
+            const settings = getUserSettings(user);
+            
+            const text = `${recipe.name}. ${recipe.category}. Prep time: ${recipe.prepTime} minutes. 
+                Ingredients: ${recipe.ingredients.join(', ')}. 
+                Instructions: ${recipe.instructions}`;
+            
+            speak(text, settings, () => {
+                isReading = false;
+                document.getElementById('readBtn').style.display = 'inline-block';
+                document.getElementById('stopBtn').style.display = 'none';
+            });
+            
+            isReading = true;
+            document.getElementById('readBtn').style.display = 'none';
+            document.getElementById('stopBtn').style.display = 'inline-block';
+        }
+
+        function stopReading() {
+            speechSynthesis.cancel();
+            isReading = false;
+            document.getElementById('readBtn').style.display = 'inline-block';
+            document.getElementById('stopBtn').style.display = 'none';
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Settings - Recipe Hub</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <nav>
+        <h1>🍳 Recipe Hub</h1>
+        <div>
+            <a href="recipes.html">Recipes</a>
+            <a href="settings.html" class="active">Settings</a>
+            <a href="#" onclick="logout()">Logout</a>
+        </div>
+    </nav>
+    <div class="container">
+        <div class="settings-box">
+            <h2>Personal Settings</h2>
+            <div class="setting-item">
+                <label>Theme</label>
+                <select id="theme" onchange="saveSetting('theme', this.value)">
+                    <option value="light">Light</option>
+                    <option value="dark">Dark</option>
+                </select>
+            </div>
+            <div class="setting-item">
+                <label>Font Size</label>
+                <select id="fontSize" onchange="saveSetting('fontSize', this.value)">
+                    <option value="small">Small</option>
+                    <option value="medium">Medium</option>
+                    <option value="large">Large</option>
+                </select>
+            </div>
+            <div class="setting-item">
+                <label>Voice</label>
+                <select id="voice" onchange="saveSetting('voice', this.value)"></select>
+            </div>
+            <div class="setting-item">
+                <label>Speech Rate</label>
+                <select id="speechRate" onchange="saveSetting('speechRate', this.value)">
+                    <option value="0.5">Slow</option>
+                    <option value="1">Normal</option>
+                    <option value="1.5">Fast</option>
+                </select>
+            </div>
+            <div class="setting-item">
+                <label>Auto-read Recipes</label>
+                <select id="autoRead" onchange="saveSetting('autoRead', this.value)">
+                    <option value="false">Off</option>
+                    <option value="true">On</option>
+                </select>
+            </div>
+            <button onclick="testVoice()">Test Voice</button>
+        </div>
+    </div>
+    <script src="app.js"></script>
+    <script>
+        checkAuth();
+        loadSettings();
+
+        function loadSettings() {
+            const user = getCurrentUser();
+            const settings = getUserSettings(user);
+            
+            document.getElementById('theme').value = settings.theme;
+            document.getElementById('fontSize').value = settings.fontSize;
+            document.getElementById('speechRate').value = settings.speechRate;
+            document.getElementById('autoRead').value = settings.autoRead;
+            
+            applySettings(settings);
+            loadVoices();
+        }
+
+        function loadVoices() {
+            const voiceSelect = document.getElementById('voice');
+            const voices = speechSynthesis.getVoices();
+            const user = getCurrentUser();
+            const settings = getUserSettings(user);
+            
+            voiceSelect.innerHTML = '';
+            voices.forEach((voice, index) => {
+                const option = document.createElement('option');
+                option.value = index;
+                option.textContent = voice.name + ' (' + voice.lang + ')';
+                voiceSelect.appendChild(option);
+            });
+            
+            voiceSelect.value = settings.voice;
+        }
+
+        speechSynthesis.onvoiceschanged = loadVoices;
+
+        function saveSetting(key, value) {
+            const user = getCurrentUser();
+            const allSettings = getSettings();
+            allSettings[user][key] = value;
+            localStorage.setItem('settings', JSON.stringify(allSettings));
+            applySettings(allSettings[user]);
+        }
+
+        function applySettings(settings) {
+            document.body.className = settings.theme + ' font-' + settings.fontSize;
+        }
+
+        function testVoice() {
+            const user = getCurrentUser();
+            const settings = getUserSettings(user);
+            speak('This is how recipes will sound when read aloud.', settings);
+        }
+    </script>
+</body>
+</html>
